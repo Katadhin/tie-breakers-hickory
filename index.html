@@ -90,6 +90,9 @@
   .matchup{font-family:var(--cond);font-weight:600;font-size:18px;text-transform:uppercase;letter-spacing:.3px}
   .when{font-family:var(--cond);color:var(--muted);font-size:14px;text-transform:uppercase;letter-spacing:.5px}
   .when .live{color:var(--red2);font-weight:700}
+  .livedot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red2);margin-right:6px;animation:pulse 1.4s ease-in-out infinite}
+  .game.liveon{border-color:var(--red2);box-shadow:0 0 0 1px var(--red2) inset}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
   .groupL{font-family:var(--cond);font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--gold);font-size:13px;margin:22px 0 10px}
 
   .specials{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:8px}
@@ -424,22 +427,43 @@
     hw.innerHTML=html;
   }
 
-  // ---- On Our Screens: reads games.json (a daily task refreshes that file) ----
+  // ---- On Our Screens: reads games.json; flips to "On Now" at kickoff (ET), re-checked each minute ----
   function ymd(dt){ return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
-  var today=ymd(now);
-  var tl=document.getElementById('todayLabel');
-  if(tl) tl.textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
   function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-  function card(g,hot){ var c=(g.c==='nfl'||g.c==='cfb'||g.c==='cbb')?g.c:'';
-    return '<div class="game'+(hot?' hot':'')+'"><span class="lg '+c+'">'+esc(g.lg)+'</span>'
-    +'<div><div class="matchup">'+esc(g.m)+'</div><div class="when">'+(hot?'<span class="live">Tonight</span> · ':'')+esc(g.t)+'</div></div></div>'; }
+  var GWINDOW={nfl:210,cfb:210,cbb:150}; // minutes a game stays "on"
+  function startOf(g,ref){
+    var m=/(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(g.t||''); if(!m) return null;
+    var hr=(+m[1])%12; if(/pm/i.test(m[3])) hr+=12;
+    var d=new Date(ref); d.setHours(hr,+m[2],0,0); return d;
+  }
+  function card(g,mode){
+    var c=(g.c==='nfl'||g.c==='cfb'||g.c==='cbb')?g.c:'';
+    var when = mode==='live' ? '<span class="live"><span class="livedot" aria-hidden="true"></span>On Now</span>'
+             : mode==='today' ? '<span class="live">Tonight</span> · '+esc(g.t)
+             : esc(g.t);
+    return '<div class="game'+(mode==='future'?'':' hot')+(mode==='live'?' liveon':'')+'"><span class="lg '+c+'">'+esc(g.lg)+'</span>'
+      +'<div><div class="matchup">'+esc(g.m)+'</div><div class="when">'+when+'</div></div></div>';
+  }
   function render(GAMES){
-    var tonight=GAMES.filter(function(g){return g.d===today;});
-    var upcoming=GAMES.filter(function(g){return g.d>today;});
+    var now=new Date(new Date().toLocaleString('en-US',{timeZone:'America/New_York'}));
+    var today=ymd(now);
+    var tl=document.getElementById('todayLabel');
+    if(tl) tl.textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+    var live=[], soon=[];
+    GAMES.filter(function(g){return g.d===today;}).forEach(function(g){
+      var st=startOf(g,now);
+      if(st){ var mins=(now-st)/60000, win=GWINDOW[g.c]||180;
+        if(mins>=0 && mins<win){ live.push(g); return; }
+        if(mins>=win){ return; } }
+      soon.push(g);
+    });
+    soon.sort(function(a,b){ var x=startOf(a,now),y=startOf(b,now); return (x&&y)?x-y:0; });
+    var tonight=live.map(function(g){return card(g,'live');}).concat(soon.map(function(g){return card(g,'today');}));
     var tg=document.getElementById('tonightGroup');
-    if(tg) tg.innerHTML=tonight.length?'<div class="groupL">On Tonight</div><div class="games">'+tonight.map(function(g){return card(g,true);}).join('')+'</div>':'';
+    if(tg) tg.innerHTML=tonight.length?'<div class="groupL">'+(live.length?'On Now &amp; Tonight':'On Tonight')+'</div><div class="games">'+tonight.join('')+'</div>':'';
+    var upcoming=GAMES.filter(function(g){return g.d>today;});
     var ug=document.getElementById('upcomingGroup');
-    if(ug) ug.innerHTML=upcoming.length?'<div class="groupL">Coming Up</div><div class="games">'+upcoming.slice(0,6).map(function(g){return card(g,false);}).join('')+'</div>':'';
+    if(ug) ug.innerHTML=upcoming.length?'<div class="groupL">Coming Up</div><div class="games">'+upcoming.slice(0,6).map(function(g){return card(g,'future');}).join('')+'</div>':'';
   }
   var DEFAULT_GAMES=[
     {d:'2026-11-25',lg:'CBB',c:'cbb',m:'Duke at UConn',t:'7:00 PM'},
@@ -454,9 +478,12 @@
     {d:'2026-11-27',lg:'CFB',c:'cfb',m:'Texas A&M at Texas',t:'7:30 PM'},
     {d:'2026-11-27',lg:'NFL',c:'nfl',m:'Steelers at Broncos',t:'3:00 PM'}
   ];
+  var GAMES_DATA=DEFAULT_GAMES;
+  function draw(){ render(GAMES_DATA); }
   fetch('games.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;})
-    .then(function(j){ render(Array.isArray(j)&&j.length?j:DEFAULT_GAMES); })
-    .catch(function(){ render(DEFAULT_GAMES); });
+    .then(function(j){ if(Array.isArray(j)&&j.length) GAMES_DATA=j; draw(); })
+    .catch(function(){ draw(); });
+  setInterval(draw, 60000);
 
   // ---- Simple hash router for Privacy / Terms ----
   var home=document.getElementById('view-home'),
