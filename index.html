@@ -63,6 +63,7 @@
   .hero-logo .status{justify-content:center;margin-top:16px}
   .hero-logo .tag{font-family:var(--disp);color:#fff;letter-spacing:1px;margin-top:16px;font-size:24px;text-transform:uppercase}
   .hero-logo .tag em{font-style:normal;color:var(--red2)}
+  .closurebar{background:var(--red2);color:#fff;text-align:center;font-family:var(--cond);font-weight:600;letter-spacing:1px;text-transform:uppercase;font-size:14px;padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.18)}
   @media(max-width:560px){.herologo{width:168px;height:168px}}
 
   section{padding:64px 0;border-bottom:1px solid var(--line)}
@@ -187,6 +188,7 @@
 <main id="main" tabindex="-1">
 <div id="view-home">
 
+  <div id="closureBar" class="closurebar" role="status" hidden></div>
   <section class="hero-logo" aria-label="Welcome">
     <div class="hero-bg" aria-hidden="true">
       <img src="photos/tie-breakers-wings.jpg" alt="" class="on">
@@ -411,20 +413,32 @@
 
 <script>
 (function(){
-  // ---- Hours widget (America/New_York, daily 11am-11pm) ----
+  // ---- Hours widget (America/New_York, daily 11am-11pm; holiday closures) ----
   var OPEN=11, CLOSE=23;
   var DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  // One-off closures, keyed by ET calendar date (YYYY-MM-DD)
+  var CLOSURES={ '2026-11-26':'Thanksgiving' };
   function etNow(){ return new Date(new Date().toLocaleString('en-US',{timeZone:'America/New_York'})); }
+  function etKey(){ return new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'}); }
+  function pad2(n){ return (n<10?'0':'')+n; }
+  function shiftKey(key,n){ var p=key.split('-'); var d=new Date(Date.UTC(+p[0],+p[1]-1,+p[2])); d.setUTCDate(d.getUTCDate()+n); return d.getUTCFullYear()+'-'+pad2(d.getUTCMonth()+1)+'-'+pad2(d.getUTCDate()); }
   var now=etNow(), h=now.getHours(), dow=now.getDay();
-  var isOpen = h>=OPEN && h<CLOSE;
-  var txt = (isOpen ? 'Open now' : 'Closed') + ' · ' + (isOpen ? 'Closes 11 PM' : 'Opens 11 AM');
+  var todayKey=etKey();
+  var closedToday=CLOSURES[todayKey];
+  var isOpen = !closedToday && h>=OPEN && h<CLOSE;
+  var txt = closedToday ? ('Closed for '+closedToday) : ((isOpen?'Open now':'Closed')+' · '+(isOpen?'Closes 11 PM':'Opens 11 AM'));
   var st=document.getElementById('statusText'); if(st) st.textContent=txt;
   var st2=document.getElementById('statusText2'); if(st2) st2.textContent=txt;
   var dot=document.getElementById('statusDot'); if(dot && !isOpen) dot.className='dot shut';
+  var cb=document.getElementById('closureBar');
+  if(cb){ var nextKey=shiftKey(todayKey,1);
+    var msg = closedToday ? ('Closed today for '+closedToday) : (CLOSURES[nextKey] ? ('Closed tomorrow for '+CLOSURES[nextKey]) : '');
+    if(msg){ cb.textContent=msg; cb.hidden=false; } }
   var hw=document.getElementById('hoursWeek');
   if(hw){ var html='';
     for(var i=0;i<7;i++){ var cls=i===dow?' class="today"':'';
-      var val=(i===dow && isOpen)?'<b>Open · 11 AM – 11 PM</b>':'11 AM – 11 PM';
+      var cl=CLOSURES[shiftKey(todayKey,i-dow)];
+      var val = cl ? ('Closed · '+cl) : ((i===dow && isOpen)?'<b>Open · 11 AM – 11 PM</b>':'11 AM – 11 PM');
       html+='<div'+cls+'><span>'+DAYS[i]+'</span><span>'+val+'</span></div>';
     }
     hw.innerHTML=html;
