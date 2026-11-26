@@ -135,6 +135,8 @@
   .hours-week div{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);color:#d3d3ce}
   .hours-week div.today{color:#fff}
   .hours-week div.today b{color:var(--green)}
+  .hours-week div.today span:first-child{color:var(--green)}
+  .hours-week div .cl{color:var(--red2)}
   .socials{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
   .socials a{font-family:var(--cond);font-weight:600;text-transform:uppercase;letter-spacing:1px;font-size:14px;border:1px solid var(--line);border-radius:4px;padding:9px 15px}
   .socials a:hover{border-color:var(--red2);color:#fff}
@@ -426,7 +428,10 @@
   var todayKey=etKey();
   var closedToday=CLOSURES[todayKey];
   var isOpen = !closedToday && h>=OPEN && h<CLOSE;
-  var txt = closedToday ? ('Closed for '+closedToday) : ((isOpen?'Open now':'Closed')+' · '+(isOpen?'Closes 11 PM':'Opens 11 AM'));
+  function nextOpenDay(){ for(var n=1;n<=14;n++){ var k=shiftKey(todayKey,n); if(!CLOSURES[k]){ var p=k.split('-'); return DAYS[new Date(Date.UTC(+p[0],+p[1]-1,+p[2])).getUTCDay()]; } } return ''; }
+  var txt;
+  if(closedToday){ var _no=nextOpenDay(); txt='Closed for '+closedToday+(_no?(' · Open '+_no+' at 11 AM'):''); }
+  else { txt=(isOpen?'Open now':'Closed')+' · '+(isOpen?'Closes 11 PM':'Opens 11 AM'); }
   var st=document.getElementById('statusText'); if(st) st.textContent=txt;
   var st2=document.getElementById('statusText2'); if(st2) st2.textContent=txt;
   var dot=document.getElementById('statusDot'); if(dot && !isOpen) dot.className='dot shut';
@@ -438,7 +443,7 @@
   if(hw){ var html='';
     for(var i=0;i<7;i++){ var cls=i===dow?' class="today"':'';
       var cl=CLOSURES[shiftKey(todayKey,i-dow)];
-      var val = cl ? ('Closed · '+cl) : ((i===dow && isOpen)?'<b>Open · 11 AM – 11 PM</b>':'11 AM – 11 PM');
+      var val = cl ? ('<span class="cl">Closed · '+cl+'</span>') : ((i===dow && isOpen)?'<b>Open · 11 AM – 11 PM</b>':'11 AM – 11 PM');
       html+='<div'+cls+'><span>'+DAYS[i]+'</span><span>'+val+'</span></div>';
     }
     hw.innerHTML=html;
