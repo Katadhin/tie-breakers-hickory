@@ -1,14 +1,13 @@
 [
-  {"d":"2026-11-27","lg":"CFB","c":"cfb","m":"App State at S. Alabama","t":"3:00 PM"},
-  {"d":"2026-11-27","lg":"NFL","c":"nfl","m":"Broncos at Steelers","t":"3:00 PM · Black Friday"},
-  {"d":"2026-11-27","lg":"CFB","c":"cfb","m":"Florida at Florida State","t":"3:30 PM"},
-  {"d":"2026-11-27","lg":"CBB","c":"cbb","m":"West Virginia at North Carolina","t":"7:00 PM · Charlotte"},
   {"d":"2026-11-28","lg":"CFB","c":"cfb","m":"NC State at North Carolina","t":"12:00 PM"},
   {"d":"2026-11-28","lg":"CFB","c":"cfb","m":"Navy at Charlotte","t":"12:00 PM"},
-  {"d":"2026-11-28","lg":"CBB","c":"cbb","m":"Elon at NC State","t":"12:00 PM"},
-  {"d":"2026-11-28","lg":"CFB","c":"cfb","m":"South Carolina at Clemson","t":"3:00 PM"},
+  {"d":"2026-11-28","lg":"CFB","c":"cfb","m":"Michigan at Ohio State","t":"12:00 PM"},
+  {"d":"2026-11-28","lg":"CFB","c":"cfb","m":"South Carolina at Clemson","t":"3:00 PM · Palmetto Bowl"},
   {"d":"2026-11-28","lg":"CFB","c":"cfb","m":"Duke at Wake Forest","t":"3:30 PM"},
+  {"d":"2026-11-28","lg":"CFB","c":"cfb","m":"Auburn at Alabama","t":"7:30 PM · Iron Bowl"},
+  {"d":"2026-11-29","lg":"NFL","c":"nfl","m":"Falcons at Vikings","t":"1:00 PM"},
   {"d":"2026-11-29","lg":"NFL","c":"nfl","m":"Seahawks at 49ers","t":"4:25 PM"},
-  {"d":"2026-11-29","lg":"NFL","c":"nfl","m":"Raiders at Browns","t":"8:20 PM"},
-  {"d":"2026-11-30","lg":"NFL","c":"nfl","m":"Panthers at Buccaneers","t":"8:15 PM"}
+  {"d":"2026-11-29","lg":"NFL","c":"nfl","m":"Raiders at Browns","t":"8:20 PM · SNF"},
+  {"d":"2026-11-30","lg":"NFL","c":"nfl","m":"Panthers at Buccaneers","t":"8:15 PM · MNF"},
+  {"d":"2026-12-01","lg":"CBB","c":"cbb","m":"Arkansas at North Carolina","t":"7:30 PM · ACC/SEC Challenge"}
 ]
